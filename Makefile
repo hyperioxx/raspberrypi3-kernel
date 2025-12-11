@@ -1,32 +1,60 @@
-GCC   = aarch64-elf-gcc
-LD    = aarch64-elf-ld
-AS    = aarch64-elf-as
-OC    = aarch64-elf-objcopy
+# Select architecture: aarch64 or x86_64
+ARCH ?= aarch64
 
-BUILD = ./build
-BIN   = ./bin
+SUPPORTED_ARCHES := aarch64 x86_64
 
-SRC_C  := $(wildcard ./src/*.c)
-OBJ_C  := $(patsubst ./src/%.c, $(BUILD)/%.o, $(SRC_C))
+# Simple guard: error if ARCH is unsupported
+ifeq (,$(filter $(ARCH),$(SUPPORTED_ARCHES)))
+$(error Unsupported ARCH '$(ARCH)'. Supported: $(SUPPORTED_ARCHES))
+endif
+
+# Per-arch cross compiler prefixes
+CROSS_COMPILE_aarch64 = aarch64-elf-
+CROSS_COMPILE_x86_64  = x86_64-elf-
+
+CROSS_COMPILE = $(CROSS_COMPILE_$(ARCH))
+
+GCC = $(CROSS_COMPILE)gcc
+LD  = $(CROSS_COMPILE)ld
+AS  = $(CROSS_COMPILE)as
+OC  = $(CROSS_COMPILE)objcopy
+
+# Per-arch build/bin dirs
+BUILD = ./build/$(ARCH)
+BIN   = ./bin/$(ARCH)
+
+SRC_DIR      = ./src
+ARCH_SRC_DIR = $(SRC_DIR)/$(ARCH)
+
+# Common C sources (in ./src)
+SRC_C  := $(wildcard $(SRC_DIR)/*.c)
+OBJ_C  := $(patsubst $(SRC_DIR)/%.c, $(BUILD)/%.o, $(SRC_C))
+
+# Arch-specific asm object
 OBJ_S  := $(BUILD)/boot.o
+
 OBJ    := $(OBJ_C) $(OBJ_S)
 
-all: $(BIN)/kernel8.img
+# Top-level target
+all: $(BIN)/kernel-$(ARCH).bin
 
-kernel8.bin: $(BIN)/kernel8.img
+# Convert ELF to flat binary
+$(BIN)/kernel-$(ARCH).bin: $(BUILD)/kernel.elf | $(BIN)
+	$(OC) -O binary $(BUILD)/kernel.elf $@
 
-$(BIN)/kernel8.img: $(BUILD)/kernel.elf | $(BIN)
-	$(OC) -O binary $(BUILD)/kernel.elf $(BIN)/kernel8.img
+# Link kernel
+$(BUILD)/kernel.elf: $(OBJ) $(ARCH_SRC_DIR)/linker.ld | $(BUILD)
+	$(LD) -T $(ARCH_SRC_DIR)/linker.ld -o $@ $(OBJ)
 
-$(BUILD)/kernel.elf: $(OBJ) ./src/linker.ld | $(BUILD)
-	$(LD) -T ./src/linker.ld -o $(BUILD)/kernel.elf $(OBJ)
+# Assemble boot.s
+$(BUILD)/boot.o: $(ARCH_SRC_DIR)/boot.s | $(BUILD)
+	$(AS) $< -o $@
 
-$(BUILD)/boot.o: ./src/boot.s | $(BUILD)
-	$(AS) ./src/boot.s -o $(BUILD)/boot.o
-
-$(BUILD)/%.o: ./src/%.c | $(BUILD)
+# Compile common C sources
+$(BUILD)/%.o: $(SRC_DIR)/%.c | $(BUILD)
 	$(GCC) -c $< -o $@
 
+# Directories
 $(BUILD):
 	mkdir -p $(BUILD)
 
@@ -35,5 +63,5 @@ $(BIN):
 
 .PHONY: clean
 clean:
-	rm -rf $(BIN) $(BUILD)
+	rm -rf ./build ./bin
 
