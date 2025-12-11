@@ -1,29 +1,39 @@
-GCC=aarch64-linux-gnu-gcc
-LD=aarch64-linux-gnu-ld
-AS=aarch64-linux-gnu-as
-BUILD=./build
-BIN=./bin
+GCC   = aarch64-elf-gcc
+LD    = aarch64-elf-ld
+AS    = aarch64-elf-as
+OC    = aarch64-elf-objcopy
 
+BUILD = ./build
+BIN   = ./bin
 
-kernel8.bin: $(BIN) kernel.elf
-	aarch64-linux-gnu-objcopy -O binary $(BUILD)/kernel.elf $(BIN)/kernel8.img
+SRC_C  := $(wildcard ./src/*.c)
+OBJ_C  := $(patsubst ./src/%.c, $(BUILD)/%.o, $(SRC_C))
+OBJ_S  := $(BUILD)/boot.o
+OBJ    := $(OBJ_C) $(OBJ_S)
 
-kernel.elf: boot.o main.o
-	$(LD) -T ./src/linker.ld -o $(BUILD)/kernel.elf $(BUILD)/boot.o $(BUILD)/main.o
+all: $(BIN)/kernel8.img
 
+kernel8.bin: $(BIN)/kernel8.img
 
-main.o: $(BUILD)
-	$(GCC) ./src/main.c -c -o $(BUILD)/main.o
+$(BIN)/kernel8.img: $(BUILD)/kernel.elf | $(BIN)
+	$(OC) -O binary $(BUILD)/kernel.elf $(BIN)/kernel8.img
 
-boot.o: $(BUILD)
+$(BUILD)/kernel.elf: $(OBJ) ./src/linker.ld | $(BUILD)
+	$(LD) -T ./src/linker.ld -o $(BUILD)/kernel.elf $(OBJ)
+
+$(BUILD)/boot.o: ./src/boot.s | $(BUILD)
 	$(AS) ./src/boot.s -o $(BUILD)/boot.o
 
+$(BUILD)/%.o: ./src/%.c | $(BUILD)
+	$(GCC) -c $< -o $@
+
 $(BUILD):
-	mkdir $(BUILD)
+	mkdir -p $(BUILD)
 
 $(BIN):
-	mkdir $(BIN)
+	mkdir -p $(BIN)
 
 .PHONY: clean
 clean:
-	rm -rf ./bin/* ./build/*
+	rm -rf $(BIN) $(BUILD)
+

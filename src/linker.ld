@@ -2,13 +2,24 @@ ENTRY(_start)
 
 SECTIONS
 {
-    . = 1M; 
+    . = 0x80000; 
 
     .text : {
+        KEEP(*(.text.boot))
         *(.text)
     }
-    
+
+    .rodata : {
+        *(.rodata*)
+     }
+     . = ALIGN(16);    
     .bss : {
-        *(.bss)
+         _bss_start = .;
+        *(.bss*)
+        *(COMMON)
+        _bss_end = .;
+    }
+    .stack (NOLOAD) : ALIGN(16) {
+        *(.stack)
     }
 }
