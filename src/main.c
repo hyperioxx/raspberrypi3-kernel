@@ -3,8 +3,7 @@
 #include "alloc.h"
 
 int kernel_main(void) {
-    uart_print("Tiny Kernel");
-    kalloc(20);
+    uart_print("Tiny Kernel\n");
     while (1) {
     }
     return 0;
