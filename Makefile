@@ -1,60 +1,51 @@
-# Select architecture: aarch64 or x86_64
-ARCH ?= aarch64
+ARCH   = aarch64
 
-SUPPORTED_ARCHES := aarch64 x86_64
+GCC   = aarch64-elf-gcc
+LD    = aarch64-elf-ld
+AS    = aarch64-elf-as
+OC    = aarch64-elf-objcopy
 
-# Simple guard: error if ARCH is unsupported
-ifeq (,$(filter $(ARCH),$(SUPPORTED_ARCHES)))
-$(error Unsupported ARCH '$(ARCH)'. Supported: $(SUPPORTED_ARCHES))
-endif
-
-# Per-arch cross compiler prefixes
-CROSS_COMPILE_aarch64 = aarch64-elf-
-CROSS_COMPILE_x86_64  = x86_64-elf-
-
-CROSS_COMPILE = $(CROSS_COMPILE_$(ARCH))
-
-GCC = $(CROSS_COMPILE)gcc
-LD  = $(CROSS_COMPILE)ld
-AS  = $(CROSS_COMPILE)as
-OC  = $(CROSS_COMPILE)objcopy
-
-# Per-arch build/bin dirs
-BUILD = ./build/$(ARCH)
-BIN   = ./bin/$(ARCH)
+BUILD = ./build
+BIN   = ./bin
 
 SRC_DIR      = ./src
 ARCH_SRC_DIR = $(SRC_DIR)/$(ARCH)
 
-# Common C sources (in ./src)
+# C files that are arch-independent (still under ./src)
 SRC_C  := $(wildcard $(SRC_DIR)/*.c)
 OBJ_C  := $(patsubst $(SRC_DIR)/%.c, $(BUILD)/%.o, $(SRC_C))
 
-# Arch-specific asm object
+# Arch-specific C sources
+ARCH_SRC_C := $(wildcard $(ARCH_SRC_DIR)/*.c)
+ARCH_OBJ_C := $(patsubst $(ARCH_SRC_DIR)/%.c, $(BUILD)/%.o, $(ARCH_SRC_C))
+
+# Arch-specific assembly object
 OBJ_S  := $(BUILD)/boot.o
 
-OBJ    := $(OBJ_C) $(OBJ_S)
+OBJ    := $(OBJ_C) $(OBJ_S) $(ARCH_OBJ_C)
 
-# Top-level target
-all: $(BIN)/kernel-$(ARCH).bin
+all: $(BIN)/kernel8.img
 
-# Convert ELF to flat binary
-$(BIN)/kernel-$(ARCH).bin: $(BUILD)/kernel.elf | $(BIN)
-	$(OC) -O binary $(BUILD)/kernel.elf $@
+kernel8.bin: $(BIN)/kernel8.img
 
-# Link kernel
+$(BIN)/kernel8.img: $(BUILD)/kernel.elf | $(BIN)
+	$(OC) -O binary $(BUILD)/kernel.elf $(BIN)/kernel8.img
+
+# NOTE: linker.ld is now under src/aarch64
 $(BUILD)/kernel.elf: $(OBJ) $(ARCH_SRC_DIR)/linker.ld | $(BUILD)
-	$(LD) -T $(ARCH_SRC_DIR)/linker.ld -o $@ $(OBJ)
+	$(LD) -T $(ARCH_SRC_DIR)/linker.ld -o $(BUILD)/kernel.elf $(OBJ)
 
-# Assemble boot.s
+# boot.s is now under src/aarch64
 $(BUILD)/boot.o: $(ARCH_SRC_DIR)/boot.s | $(BUILD)
-	$(AS) $< -o $@
+	$(AS) $(ARCH_SRC_DIR)/boot.s -o $(BUILD)/boot.o
 
-# Compile common C sources
+# C sources in ./src (arch-independent)
 $(BUILD)/%.o: $(SRC_DIR)/%.c | $(BUILD)
 	$(GCC) -c $< -o $@
 
-# Directories
+$(BUILD)/%.o: $(ARCH_SRC_DIR)/%.c | $(BUILD)
+	$(GCC) -c $< -o $@
+
 $(BUILD):
 	mkdir -p $(BUILD)
 
@@ -63,5 +54,5 @@ $(BIN):
 
 .PHONY: clean
 clean:
-	rm -rf ./build ./bin
+	rm -rf $(BIN) $(BUILD)
 
