@@ -2,6 +2,11 @@
 
 #define LOCAL_PERIPH_BASE 0x40000000UL
 #define CORE0_TIMER_IRQ_CTRL (LOCAL_PERIPH_BASE + 0x40)
+#define CORE0_IRQ_SOURCE  (LOCAL_PERIPH_BASE + 0x60)
+
+uint32_t core0_irq_source(void) {
+    return *(volatile uint32_t*)CORE0_IRQ_SOURCE;
+}
 
 uint32_t get_clock_frequency() {
     uint32_t freq;

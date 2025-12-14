@@ -5,23 +5,22 @@ LD    = $(ARCH)-elf-ld
 AS    = $(ARCH)-elf-as
 OC    = $(ARCH)-elf-objcopy
 
-BUILD = ./build
-BIN   = ./bin
+BUILD = build
+BIN   = bin
 
-SRC_DIR      = ./src
+SRC_DIR      = src
 KERNEL_DIR   = $(SRC_DIR)/kernel
 ARCH_SRC_DIR = $(SRC_DIR)/arch/$(ARCH)
-INCLUDE_DIR = ./include
+DRIVERS_DIR   = $(SRC_DIR)/drivers
+INCLUDE_DIR = include
 
-SRC_C  := $(wildcard $(SRC_DIR)/kernel/*.c)
-OBJ_C  := $(patsubst $(SRC_DIR)/kernel/%.c, $(BUILD)/%.o, $(SRC_C))
+ALL_SRC_C :=  $(wildcard $(KERNEL_DIR)/*.c) \
+  $(wildcard $(ARCH_SRC_DIR)/*.c) \
+  $(wildcard $(DRIVERS_DIR)/*/*.c)
 
-ARCH_SRC_C := $(wildcard $(ARCH_SRC_DIR)/*.c)
-ARCH_OBJ_C := $(patsubst $(ARCH_SRC_DIR)/%.c, $(BUILD)/%.o, $(ARCH_SRC_C))
+OBJ_S := $(BUILD)/arch/$(ARCH)/boot.o
 
-OBJ_S  := $(BUILD)/boot.o
-
-OBJ    := $(OBJ_C) $(OBJ_S) $(ARCH_OBJ_C) 
+OBJ := $(patsubst src/%.c,build/%.o,$(ALL_SRC_C)) $(OBJ_S)
 
 all: $(BIN)/kernel8.img
 
@@ -33,14 +32,13 @@ $(BIN)/kernel8.img: $(BUILD)/kernel.elf | $(BIN)
 $(BUILD)/kernel.elf: $(OBJ) $(ARCH_SRC_DIR)/linker.ld | $(BUILD)
 	$(LD) -T $(ARCH_SRC_DIR)/linker.ld -o $(BUILD)/kernel.elf $(OBJ)
 
-$(BUILD)/boot.o: $(ARCH_SRC_DIR)/boot.s | $(BUILD)
-	$(AS) $(ARCH_SRC_DIR)/boot.s -o $(BUILD)/boot.o
+$(BUILD)/%.o: src/%.s
+	mkdir -p $(dir $@)
+	$(AS) $< -o $@
 
-$(BUILD)/%.o: $(KERNEL_DIR)/%.c | $(BUILD)
-	$(GCC) -I $(INCLUDE_DIR) -c $< -o $@
-
-$(BUILD)/%.o: $(ARCH_SRC_DIR)/%.c | $(BUILD)
-	$(GCC) -I $(INCLUDE_DIR) -c $< -o $@
+$(BUILD)/%.o : src/%.c
+	mkdir -p $(dir $@)
+	$(GCC) -I include -c $< -o $@
 
 $(BUILD):
 	mkdir -p $(BUILD)

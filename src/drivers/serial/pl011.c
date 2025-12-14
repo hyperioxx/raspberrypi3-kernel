@@ -1,7 +1,6 @@
-#ifndef UART_H
-#define UART_H
+#include "pl011.h" 
 
-
+//TODO: these are specific raspberry pi 3 memory mapped address, I would need to add the ability to set per platform
 /* see section 13.4 Register View in docs/BCM2837-ARM-Peripherals.pdf
 0x00     DR        Data Register
 0x04     RSR/ESR   Receive Status / Error Clear
@@ -17,10 +16,13 @@
 #define UART_FR  (UART_BASE + 0x18)
 #define UART_CR  (UART_BASE + 0x30)
 
-extern volatile unsigned int * const UART0_DR;
-extern volatile unsigned int * const UART0_FR;
-extern volatile unsigned int * const UART0_CR;
+volatile unsigned int * const UART0_DR = (unsigned int*)UART_DR; 
+volatile unsigned int * const UART0_FR = (unsigned int*)UART_FR; 
+volatile unsigned int * const UART0_CR = (unsigned int*)UART_CR;
 
-void uart_print(char *);
-
-#endif
+void pl011_write(char *string) {
+    for (int i = 0; string[i] != '\0'; i++) { 
+        while (*UART0_FR & (1 << 5)) {}
+        *UART0_DR = string[i]; 
+    } 
+}
