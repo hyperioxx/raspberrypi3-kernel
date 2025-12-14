@@ -3,10 +3,13 @@
 #include "types.h"
 
 struct pl011 {
-    volatile uint32_t *base; 
+    volatile uintptr_t *dr;
+    volatile uintptr_t *fr;
+    volatile uintptr_t *cr;
 };
 
-void pl011_write(struct pl011 *, char *);
+void pl011_init(uintptr_t base);
+void pl011_write(const char *s);
 
-void pl011_init(struct pl011 *uart, uintptr_t base);
+
 #endif

@@ -7,6 +7,7 @@
 .global _start
 .section .text.boot
 _start:
+    mov x19, x0 // bootloader will store the DTB (Device Tree Blob) at register x0 so we need to move it 
     BL check_el
 loop:
     B loop
@@ -39,6 +40,7 @@ in_el1:
     BL vector_table_setup
     BL bss_setup
     BL bss_clear
+    MOV x0, x19
     BL kernel_main
 hang:
     WFI
