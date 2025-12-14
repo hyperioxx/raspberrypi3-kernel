@@ -1,4 +1,4 @@
-ARCH   = aarch64
+ARCH   ?= aarch64
 
 GCC   = $(ARCH)-elf-gcc
 LD    = $(ARCH)-elf-ld
