@@ -10,6 +10,7 @@ BIN   = ./bin
 
 SRC_DIR      = ./src
 ARCH_SRC_DIR = $(SRC_DIR)/$(ARCH)
+INCLUDE_DIR = ./include
 
 # C files that are arch-independent (still under ./src)
 SRC_C  := $(wildcard $(SRC_DIR)/*.c)
@@ -41,10 +42,10 @@ $(BUILD)/boot.o: $(ARCH_SRC_DIR)/boot.s | $(BUILD)
 
 # C sources in ./src (arch-independent)
 $(BUILD)/%.o: $(SRC_DIR)/%.c | $(BUILD)
-	$(GCC) -c $< -o $@
+	$(GCC) -I $(INCLUDE_DIR) -c $< -o $@
 
 $(BUILD)/%.o: $(ARCH_SRC_DIR)/%.c | $(BUILD)
-	$(GCC) -c $< -o $@
+	$(GCC) -I $(INCLUDE_DIR) -c $< -o $@
 
 $(BUILD):
 	mkdir -p $(BUILD)
