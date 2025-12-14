@@ -16,5 +16,7 @@ struct fdt_header {
     uint32_t boot_cpuid_phys;
     uint32_t size_dt_strings;
     uint32_t size_dt_struct;
-};
+}__attribute__((packed));
+
+const struct fdt_header* parse_fdt_header(uintptr_t dtb_ptr);
 #endif
