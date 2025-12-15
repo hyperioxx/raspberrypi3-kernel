@@ -52,4 +52,4 @@ clean:
 
 .PHONY: run
 run:
-	qemu-system-aarch64 -M raspi3b -kernel bin/kernel8.img -serial stdio -display none -dtb qemu/bcm2710-rpi-3-b.dtb
+	qemu-system-aarch64 -M raspi3b -kernel bin/kernel8.img -serial stdio -display none -dtb qemu/bcm2710-rpi-3-b.dtb -D qemu.log -d in_asm
