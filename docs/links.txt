@@ -1,0 +1,2 @@
+https://github.com/raspberrypi/linux/blob/rpi-5.10.y/Documentation/arm64/booting.rst
+https://devicetree-specification.readthedocs.io/en/stable/flattened-format.html

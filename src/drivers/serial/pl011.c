@@ -33,3 +33,4 @@ void pl011_write(const char *s)
         *uart0.dr = (uint32_t)(unsigned char)*s++;
     }
 }
+
