@@ -1,6 +1,7 @@
 #ifndef PL011_H
 #define PL011_H
 #include "types.h"
+#include "device.h"
 
 struct pl011 {
     volatile uintptr_t *dr;
@@ -8,7 +9,7 @@ struct pl011 {
     volatile uintptr_t *cr;
 };
 
-void pl011_init(uintptr_t base);
+int pl011_init(const struct device *);
 void pl011_write(const char *s);
 
 

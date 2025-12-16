@@ -1,4 +1,5 @@
 #include "pl011.h" 
+#include "device.h"
 
 //TODO: these are specific raspberry pi 3 memory mapped address, I would need to add the ability to set per platform
 /* see section 13.4 Register View in docs/BCM2837-ARM-Peripherals.pdf
@@ -19,11 +20,12 @@
 
 static struct pl011 uart0;
 
-void pl011_init(uintptr_t base)
+int pl011_init(const struct device *dev)
 {
-    uart0.dr = (volatile uintptr_t *)(base + UART_DR);
-    uart0.fr = (volatile uintptr_t *)(base + UART_FR);
-    uart0.cr = (volatile uintptr_t *)(base + UART_CR);
+    uart0.dr = (volatile uintptr_t *)(dev->mmio_base + UART_DR);
+    uart0.fr = (volatile uintptr_t *)(dev->mmio_base + UART_FR);
+    uart0.cr = (volatile uintptr_t *)(dev->mmio_base + UART_CR);
+    return 0;
 }
 
 void pl011_write(const char *s)

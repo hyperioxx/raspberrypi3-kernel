@@ -3,6 +3,7 @@
 #include "endian.h"
 #include "alloc.h"
 #include "device.h"
+#include "memory.h"
 
 // section 5.4.1 in https://devicetree-specification.readthedocs.io/en/stable/flattened-format.html
 
@@ -15,15 +16,13 @@
 
 
 #define DT_MAX_DEPTH 512
-
+#define MAX_RANGES 8
 
 struct range_entry {
         uint64_t child;
         uint64_t parent;
         uint64_t size;
     };
-
-#define MAX_RANGES 8
 
 struct dt_frame {
         struct device dev;
@@ -220,11 +219,13 @@ void parse_fdt(const struct fdt_header *hdr) {
             }
             struct device *d = &stack[depth].dev;
             if (d->name && starts_with(d->name, "memory@")) {
+                 print_device(d, depth);
+                 add_main_memory(d->mmio_base,  d->mmio_size);
                  break;
             }
 
             if (d->compatible && d->mmio_size && d->enabled) {
-                print_device(d, depth); //TODO: will have to remove this at some point
+                //print_device(d, depth); //TODO: will have to remove this at some point
                 device_register(d);
             } 
 
@@ -313,6 +314,13 @@ void parse_fdt(const struct fdt_header *hdr) {
 
                 break;
             }
+
+            if (streq(prop_name, "device-type")) {
+                d->device_type = (char *) prop_value;
+                break;
+
+            }
+            
  
            /* pl011_write("UNKOWN PROP: ");
             pl011_write(prop_name);

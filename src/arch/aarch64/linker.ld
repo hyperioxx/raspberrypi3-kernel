@@ -39,5 +39,7 @@ SECTIONS
         . += 0x100000;
         _heap_end = .;
     }
+    . = ALIGN(16);
+    _kernel_end = .;
 }
 

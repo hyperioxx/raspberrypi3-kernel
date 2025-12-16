@@ -4,7 +4,8 @@
 #include "types.h"
 
 struct device {
-    const char *name;        
+    const char *name;
+    const char *device_type;
     const char *compatible;  
     uint32_t compatible_len;
     uint64_t mmio_base;
