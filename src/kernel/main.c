@@ -21,10 +21,21 @@ static void print_hex64(uint64_t v) {
 
 //TODO: will need to come up with a better way to abstract arch's in future
 int kernel_main(uintptr_t dtb_ptr) {
+    const struct device uart0 = {
+    .name = "uart0",
+    .device_type = "serial",
+    .compatible = "ns16550a",
+    .compatible_len = 9,
+    .mmio_base = 0x3F201000,
+
+    .mmio_size = 0x1000,
+    .enabled = 1
+    };
+    pl011_init(&uart0);
     const struct fdt_header *hdr = parse_fdt_header(dtb_ptr);
     if (hdr == NULL){}
     parse_fdt(hdr);
-
+    
     const struct device *uart = device_find_compat("brcm,bcm2835-pl011");
     if (!uart) uart = device_find_compat("arm,pl011"); // some DTBs
     if (!uart) uart = device_find_compat("arm,pl011-axi");
@@ -35,7 +46,7 @@ int kernel_main(uintptr_t dtb_ptr) {
 
     pl011_write("Booting Tiny Kernel\n");
     uint64_t memory = get_main_memory_base();
-    pl011_write("memory ");
+    pl011_write("size ");
     print_hex64(memory);
     pl011_write("\n");
 

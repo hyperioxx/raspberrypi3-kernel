@@ -10,5 +10,5 @@ void add_main_memory(uint64_t start, uint64_t size) {
 
 uint64_t get_main_memory_base() {
 
-    return main_mem_base;
+    return main_mem_size;
 }
