@@ -38,7 +38,7 @@ $(BUILD)/%.o: src/%.s
 
 $(BUILD)/%.o : src/%.c
 	mkdir -p $(dir $@)
-	$(GCC) -I include -c $< -o $@
+	$(GCC) -ffreestanding -fno-builtin -mgeneral-regs-only  -I include -c $< -o $@
 
 $(BUILD):
 	mkdir -p $(BUILD)
@@ -50,6 +50,10 @@ $(BIN):
 clean:
 	rm -rf $(BIN) $(BUILD)
 
-.PHONY: run
-run:
+.PHONY: run-pi3
+run-pi3:
 	qemu-system-aarch64 -M raspi3b -kernel bin/kernel8.img -serial stdio -display none -dtb qemu/bcm2710-rpi-3-b.dtb -D qemu.log -d in_asm
+
+.PHONY: run-pi4
+run-pi4:
+	qemu-system-aarch64 -M raspi4b -kernel bin/kernel8.img -serial stdio -display none -dtb qemu/bcm2711-rpi-4-b.dtb -D qemu.log -d in_asm

@@ -10,25 +10,28 @@
 
 //TODO: will need to come up with a better way to abstract arch's in future
 int kernel_main(uintptr_t dtb_ptr) {
-    uintptr_t base = 0x3F201000;
-    pl011_init(base);
-    pl011_write("Booting Tiny Kernel\n");
-
+    
     const struct fdt_header *hdr = parse_fdt_header(dtb_ptr);
     if (hdr == NULL){}
-
     parse_fdt(hdr);
 
-    if (device_count() > 1){
-       pl011_write("more than 1 device\n");
+    const struct device *uart = device_find_compat("brcm,bcm2835-pl011");
+    if (!uart) uart = device_find_compat("arm,pl011"); // some DTBs
+    if (!uart) uart = device_find_compat("arm,pl011-axi");
+    if (uart) {
+        pl011_init(uart->mmio_base);
+        pl011_write("Console: PL011 from DT\n");
     }
 
+    pl011_write("Booting Tiny Kernel\n");
 
-    uint32_t freq = get_clock_frequency();
-    uint32_t interval = freq / 100;
-    timer_arm(interval);
-    enable_core_timer_irq();
-    asm volatile("msr DAIFClr, #2");
+
+
+    //uint32_t freq = get_clock_frequency();
+    //uint32_t interval = freq / 100;
+    //timer_arm(interval);
+    //enable_core_timer_irq();
+    //asm volatile("msr DAIFClr, #2");
     return 0;
 }
 
