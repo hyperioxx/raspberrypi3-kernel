@@ -61,3 +61,7 @@ const struct device *device_find_compat(const char *compat) {
     return 0;
 }
 
+int device_compat_has(const struct device *dev, const char *compat) {
+    if (!dev || !dev->enabled) return 0;
+    return compat_has(dev->compatible, dev->compatible_len, compat);
+}

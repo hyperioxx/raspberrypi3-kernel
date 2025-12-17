@@ -18,4 +18,5 @@ size_t device_count(void);
 const struct device *device_get(size_t i);
 
 const struct device *device_find_compat(const char *compat);
+int device_compat_has(const struct device *dev, const char *compat);
 #endif

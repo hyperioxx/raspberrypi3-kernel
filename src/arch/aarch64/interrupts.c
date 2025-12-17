@@ -1,6 +1,5 @@
-#include "../../drivers/serial/pl011.h"
 #include "interrupts.h"
-#include "timer.h"
+#include "arm_generic_timer.h"
 #include "types.h"
 
 void handle_interrupt_c(struct trap_frame *tf) {
