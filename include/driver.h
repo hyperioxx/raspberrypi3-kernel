@@ -9,6 +9,5 @@ struct driver {
    const char * compat;
    driver_init init; 
 };
-
-
+int register_driver(const char *compat, driver_init init);
 #endif

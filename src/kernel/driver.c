@@ -1,8 +1,18 @@
 #include "driver.h"
+#include "../drivers/serial/pl011.h"
 
 #define MAX_DRIVER 50
 static struct driver driver_register[MAX_DRIVER];
 static size_t driver_count = 0;
+
+
+int driver_registry_init(){
+    int err = 0;
+    err = register_driver("brcm,bcm2835-pl011", pl011_init);
+    err = register_driver("arm,pl011", pl011_init);
+    err = register_driver("arm,pl011-axi", pl011_init);
+    return err;
+}
 
 
 int register_driver(const char *compat, driver_init init){
