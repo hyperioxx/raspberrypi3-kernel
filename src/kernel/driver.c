@@ -1,6 +1,9 @@
 #include "driver.h"
 #include "../drivers/serial/pl011.h"
+#include "../drivers/irq/bcm_local_irq.h"
+#include "../drivers/irq/gic400.h"
 #include "device.h"
+
 #define MAX_DRIVER 50
 static struct driver driver_register[MAX_DRIVER];
 static size_t driver_count = 0;
@@ -11,6 +14,8 @@ int driver_registry_init(){
     err = register_driver("brcm,bcm2835-pl011", pl011_init);
     err = register_driver("arm,pl011", pl011_init);
     err = register_driver("arm,pl011-axi", pl011_init);
+    err = register_driver("brcm,bcm2836-l1-intc", bcm_local_irq_init);
+    err = register_driver("arm,gic-400", gic400_init);
     return err;
 }
 

@@ -1,4 +1,5 @@
 #include "../drivers/serial/pl011.h"
+#include "../arch/aarch64/arm_generic_timer.h"
 #include "devicetree.h"
 #include "driver.h"
 #include "types.h"
@@ -20,23 +21,31 @@ static void print_hex64(uint64_t v) {
 }
 
 int kernel_main(uintptr_t dtb_ptr) {
+    /*const struct device uart0 = {
+    .name = "uart0",
+    .device_type = "serial",
+    .compatible = "ns16550a",
+    .compatible_len = 9,
+    .mmio_base = 0x3F201000,
+
+    .mmio_size = 0x1000,
+    .enabled = 1
+    };
+    pl011_init(&uart0);*/
     const struct fdt_header *hdr = parse_fdt_header(dtb_ptr);
     if (hdr == NULL){}
     parse_fdt(hdr);
     driver_registry_init();    
     driver_probe_all();
     pl011_write("Booting Tiny Kernel\n");
-    uint64_t memory = get_main_memory_base();
-    pl011_write("size ");
-    print_hex64(memory);
-    pl011_write("\n");
+      
 
-
-    //uint32_t freq = get_clock_frequency();
-    //uint32_t interval = freq / 100;
-    //timer_arm(interval);
+    // uint64_t memory = get_main_memory_base();
+    uint32_t freq = get_clock_frequency();
+    uint32_t interval = freq / 100;
+    timer_arm(interval);
     //enable_core_timer_irq();
-    //asm volatile("msr DAIFClr, #2");
+    asm volatile("msr DAIFClr, #2");
     return 0;
 }
 

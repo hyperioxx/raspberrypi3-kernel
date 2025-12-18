@@ -1,6 +1,7 @@
-#ifndef TIMER_H
-#define TIMER_H
+#ifndef ARM_GENERIC_TIMER_H
+#define ARM_GENERIC_TIMER_H
 #include "types.h"
+#include "device.h"
 
 uint32_t core0_irq_source(void);
 uint32_t get_clock_frequency() ;

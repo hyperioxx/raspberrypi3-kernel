@@ -225,7 +225,7 @@ void parse_fdt(const struct fdt_header *hdr) {
             }
 
             if (d->compatible && d->mmio_size && d->enabled) {
-                //print_device(d, depth); //TODO: will have to remove this at some point
+                print_device(d, depth); //TODO: will have to remove this at some point
                 device_register(d);
             } 
 
