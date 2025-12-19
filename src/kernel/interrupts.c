@@ -1,7 +1,6 @@
 #include "interrupts.h"
-#include "arm_generic_timer.h"
 #include "types.h"
-#include "../../drivers/serial/pl011.h"
+#include "console.h"
 
 
 void handle_interrupt_c(struct trap_frame *tf, uint64_t type) {
@@ -16,11 +15,11 @@ void handle_interrupt_c(struct trap_frame *tf, uint64_t type) {
 void handle_sync_interrupt(struct trap_frame *tf) {}
 
 void handle_irq_interrupt(struct trap_frame *tf) {
-    uint32_t freq = get_clock_frequency();
-    uint32_t interval = freq/100 ;
-    timer_arm(interval);
-    pl011_write("Interrupt Called\n");
-    asm volatile("msr DAIFClr, #2");
+    //uint32_t freq = get_clock_frequency();
+    //uint32_t interval = freq/100 ;
+    //timer_arm(interval);
+    console_write("Interrupt Called\n");
+    //asm volatile("msr DAIFClr, #2");
 
 }
 void handle_fiq_interrupt(struct trap_frame *tf) {}

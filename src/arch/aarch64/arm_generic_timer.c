@@ -1,6 +1,5 @@
 #include "arm_generic_timer.h"
 #include "types.h"
-#include "device.h"
 
 
 uint32_t get_clock_frequency() {
