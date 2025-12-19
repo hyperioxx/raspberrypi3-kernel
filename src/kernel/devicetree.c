@@ -218,6 +218,13 @@ void parse_fdt(const struct fdt_header *hdr) {
                 return;
             }
             struct device *d = &stack[depth].dev;
+
+            if (d->name && starts_with(d->name, "cpu@")) {
+                //TODO: now that we know how many cores we have we can start initalising them later
+                print_device(d, depth);
+                break;
+            }
+
             if (d->name && starts_with(d->name, "memory@")) {
                  print_device(d, depth);
                  add_main_memory(d->mmio_base,  d->mmio_size);

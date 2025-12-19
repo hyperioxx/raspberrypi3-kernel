@@ -2,21 +2,20 @@
 #include "device.h"
 #include "types.h"
 
-/* GICv2 register offsets */
 #define GICD_CTLR      0x000
 #define GICC_CTLR      0x000
 #define GICC_PMR       0x004
 #define GICC_IAR       0x00C
 #define GICC_EOIR      0x010
-
-/* Pi 4: GIC distributor is at base, CPU interface is +0x2000 */
-#define GIC_CPU_OFFSET 0x2000
+#define GICD_ISENABLER0 0x100
+#define GIC_CPU_OFFSET 0x1000
 
 static volatile uint32_t *gicd_ctlr;
 static volatile uint32_t *gicc_ctlr;
 static volatile uint32_t *gicc_pmr;
 static volatile uint32_t *gicc_iar;
 static volatile uint32_t *gicc_eoir;
+static volatile uint32_t *gicd_isenabler0;
 
 int gic400_init(const struct device *dev)
 {
@@ -27,13 +26,17 @@ int gic400_init(const struct device *dev)
     gicc_pmr   = (volatile uint32_t *)(base + GIC_CPU_OFFSET + GICC_PMR);
     gicc_iar   = (volatile uint32_t *)(base + GIC_CPU_OFFSET + GICC_IAR);
     gicc_eoir  = (volatile uint32_t *)(base + GIC_CPU_OFFSET + GICC_EOIR);
-
+    gicd_isenabler0 = (volatile uint32_t *)(base + GICD_ISENABLER0);
+  
     /* Enable distributor */
     *gicd_ctlr = 1;
 
     /* Enable CPU interface */
     *gicc_pmr  = 0xFF;  // allow all priorities
     *gicc_ctlr = 1;
+
+    /* Enable PPI 30 (ARM physical timer) */
+    *gicd_isenabler0 = (1u << 30);
 
     return 0;
 }

@@ -21,7 +21,7 @@ static void print_hex64(uint64_t v) {
 }
 
 int kernel_main(uintptr_t dtb_ptr) {
-    /*const struct device uart0 = {
+    const struct device uart0 = {
     .name = "uart0",
     .device_type = "serial",
     .compatible = "ns16550a",
@@ -31,7 +31,7 @@ int kernel_main(uintptr_t dtb_ptr) {
     .mmio_size = 0x1000,
     .enabled = 1
     };
-    pl011_init(&uart0);*/
+    pl011_init(&uart0);
     const struct fdt_header *hdr = parse_fdt_header(dtb_ptr);
     if (hdr == NULL){}
     parse_fdt(hdr);
@@ -44,7 +44,6 @@ int kernel_main(uintptr_t dtb_ptr) {
     uint32_t freq = get_clock_frequency();
     uint32_t interval = freq / 100;
     timer_arm(interval);
-    //enable_core_timer_irq();
     asm volatile("msr DAIFClr, #2");
     return 0;
 }
