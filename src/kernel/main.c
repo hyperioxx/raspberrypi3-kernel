@@ -2,10 +2,7 @@
 #include "devicetree.h"
 #include "driver.h"
 #include "types.h"
-#include "alloc.h"
-#include "endian.h"
 #include "device.h"
-#include "str.h"
 #include "memory.h"
 #include "console.h"
 
