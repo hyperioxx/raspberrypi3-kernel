@@ -4,6 +4,56 @@
        https://krinkinmu.github.io/2021/01/10/aarch64-interrupt-handling.html
    if I ever support other aarch64 cpus then will need to handle EL3  
 */
+
+.macro SAVE_TRAP_FRAME
+    sub sp, sp, #272
+    stp x0,  x1,  [sp, #16*0]
+    stp x2,  x3,  [sp, #16*1]
+    stp x4,  x5,  [sp, #16*2]
+    stp x6,  x7,  [sp, #16*3]
+    stp x8,  x9,  [sp, #16*4]
+    stp x10, x11, [sp, #16*5]
+    stp x12, x13, [sp, #16*6]
+    stp x14, x15, [sp, #16*7]
+    stp x16, x17, [sp, #16*8]
+    stp x18, x19, [sp, #16*9]
+    stp x20, x21, [sp, #16*10]
+    stp x22, x23, [sp, #16*11]
+    stp x24, x25, [sp, #16*12]
+    stp x26, x27, [sp, #16*13]
+    stp x28, x29, [sp, #16*14]
+    stp x30, xzr, [sp, #16*15]
+    mrs x9,  elr_el1
+    mrs x10, spsr_el1
+    str x9,  [sp, #256]
+    str x10, [sp, #264]
+.endm
+
+.macro RESTORE_TRAP_FRAME
+    ldr x9,  [sp, #256]
+    ldr x10, [sp, #264]
+    msr elr_el1,  x9
+    msr spsr_el1, x10
+    ldp x30, xzr, [sp, #16*15]
+    ldp x28, x29, [sp, #16*14]
+    ldp x26, x27, [sp, #16*13]
+    ldp x24, x25, [sp, #16*12]
+    ldp x22, x23, [sp, #16*11]
+    ldp x20, x21, [sp, #16*10]
+    ldp x18, x19, [sp, #16*9]
+    ldp x16, x17, [sp, #16*8]
+    ldp x14, x15, [sp, #16*7]
+    ldp x12, x13, [sp, #16*6]
+    ldp x10, x11, [sp, #16*5]
+    ldp x8,  x9,  [sp, #16*4]
+    ldp x6,  x7,  [sp, #16*3]
+    ldp x4,  x5,  [sp, #16*2]
+    ldp x2,  x3,  [sp, #16*1]
+    ldp x0,  x1,  [sp, #16*0]
+    add sp, sp, #272
+    eret
+.endm
+    
 .global _start
 .section .text.boot
 _start:
@@ -84,13 +134,13 @@ vector_table:
     b serr_sp0
     .space 0x80 - 4
 
-    b handle_interrupt
+    b sync_entry 
     .space 0x80 - 4
-    b handle_interrupt
+    b irq_entry
     .space 0x80 - 4
-    b handle_interrupt
+    b fiq_entry
     .space 0x80 - 4
-    b handle_interrupt
+    b serror_entry
     .space 0x80 - 4
 
 sync_sp0:  b sync_sp0
@@ -98,59 +148,33 @@ irq_sp0:   b irq_sp0
 fiq_sp0:   b fiq_sp0
 serr_sp0:  b serr_sp0
 
-
-handle_interrupt:
-    sub sp, sp, #272
-
-    stp x0,  x1,  [sp, #16*0]
-    stp x2,  x3,  [sp, #16*1]
-    stp x4,  x5,  [sp, #16*2]
-    stp x6,  x7,  [sp, #16*3]
-    stp x8,  x9,  [sp, #16*4]
-    stp x10, x11, [sp, #16*5]
-    stp x12, x13, [sp, #16*6]
-    stp x14, x15, [sp, #16*7]
-    stp x16, x17, [sp, #16*8]
-    stp x18, x19, [sp, #16*9]
-    stp x20, x21, [sp, #16*10]
-    stp x22, x23, [sp, #16*11]
-    stp x24, x25, [sp, #16*12]
-    stp x26, x27, [sp, #16*13]
-    stp x28, x29, [sp, #16*14]
-    stp x30, xzr, [sp, #16*15]   // padding
-
-    mrs x9,  elr_el1
-    mrs x10, spsr_el1
-    str x9,  [sp, #256]          // ELR_EL1
-    str x10, [sp, #264]          // SPSR_EL1
-
-    mov x0, sp                   // x0 = struct trap_frame *
+sync_entry:
+    SAVE_TRAP_FRAME
+    mov x0, sp 
+    mov x1, #0          
     bl handle_interrupt_c
+    RESTORE_TRAP_FRAME
+irq_entry:
+    SAVE_TRAP_FRAME
+    mov x0, sp 
+    mov x1, #1         
+    bl handle_interrupt_c
+    RESTORE_TRAP_FRAME
 
-    ldr x9,  [sp, #256]
-    ldr x10, [sp, #264]
-    msr elr_el1,  x9
-    msr spsr_el1, x10
+fiq_entry:
+    SAVE_TRAP_FRAME
+    mov x0, sp 
+    mov x1, #2
+    bl handle_interrupt_c
+    RESTORE_TRAP_FRAME
 
-    ldp x30, xzr, [sp, #16*15]
-    ldp x28, x29, [sp, #16*14]
-    ldp x26, x27, [sp, #16*13]
-    ldp x24, x25, [sp, #16*12]
-    ldp x22, x23, [sp, #16*11]
-    ldp x20, x21, [sp, #16*10]
-    ldp x18, x19, [sp, #16*9]
-    ldp x16, x17, [sp, #16*8]
-    ldp x14, x15, [sp, #16*7]
-    ldp x12, x13, [sp, #16*6]
-    ldp x10, x11, [sp, #16*5]
-    ldp x8,  x9,  [sp, #16*4]
-    ldp x6,  x7,  [sp, #16*3]
-    ldp x4,  x5,  [sp, #16*2]
-    ldp x2,  x3,  [sp, #16*1]
-    ldp x0,  x1,  [sp, #16*0]
+serror_entry:
+    SAVE_TRAP_FRAME
+    mov x0, sp 
+    mov x1, #3
+    bl handle_interrupt_c
+    RESTORE_TRAP_FRAME
 
-    add sp, sp, #272
-    eret
 
 .section .stack, "aw", %nobits
 .align 12
