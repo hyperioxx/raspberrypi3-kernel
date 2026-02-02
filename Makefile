@@ -1,29 +1,59 @@
-GCC=aarch64-linux-gnu-gcc
-LD=aarch64-linux-gnu-ld
-AS=aarch64-linux-gnu-as
-BUILD=./build
-BIN=./bin
+ARCH   ?= aarch64
 
+GCC   = $(ARCH)-elf-gcc
+LD    = $(ARCH)-elf-ld
+AS    = $(ARCH)-elf-as
+OC    = $(ARCH)-elf-objcopy
 
-kernel8.bin: $(BIN) kernel.elf
-	aarch64-linux-gnu-objcopy -O binary $(BUILD)/kernel.elf $(BIN)/kernel8.img
+BUILD = build
+BIN   = bin
 
-kernel.elf: boot.o main.o
-	$(LD) -T ./src/linker.ld -o $(BUILD)/kernel.elf $(BUILD)/boot.o $(BUILD)/main.o
+SRC_DIR      = src
+KERNEL_DIR   = $(SRC_DIR)/kernel
+ARCH_SRC_DIR = $(SRC_DIR)/arch/$(ARCH)
+DRIVERS_DIR   = $(SRC_DIR)/drivers
+INCLUDE_DIR = include
 
+ALL_SRC_C :=  $(wildcard $(KERNEL_DIR)/*.c) \
+  $(wildcard $(ARCH_SRC_DIR)/*.c) \
+  $(wildcard $(DRIVERS_DIR)/*/*.c)
 
-main.o: $(BUILD)
-	$(GCC) ./src/main.c -c -o $(BUILD)/main.o
+OBJ_S := $(BUILD)/arch/$(ARCH)/boot.o
 
-boot.o: $(BUILD)
-	$(AS) ./src/boot.s -o $(BUILD)/boot.o
+OBJ := $(patsubst src/%.c,build/%.o,$(ALL_SRC_C)) $(OBJ_S)
+
+all: $(BIN)/kernel8.img
+
+kernel8.bin: $(BIN)/kernel8.img
+
+$(BIN)/kernel8.img: $(BUILD)/kernel.elf | $(BIN)
+	$(OC) -O binary $(BUILD)/kernel.elf $(BIN)/kernel8.img
+
+$(BUILD)/kernel.elf: $(OBJ) $(ARCH_SRC_DIR)/linker.ld | $(BUILD)
+	$(LD) -T $(ARCH_SRC_DIR)/linker.ld -o $(BUILD)/kernel.elf $(OBJ)
+
+$(BUILD)/%.o: src/%.s
+	mkdir -p $(dir $@)
+	$(AS) $< -o $@
+
+$(BUILD)/%.o : src/%.c
+	mkdir -p $(dir $@)
+	$(GCC) -ffreestanding -fno-builtin -mgeneral-regs-only  -I include -c $< -o $@
 
 $(BUILD):
-	mkdir $(BUILD)
+	mkdir -p $(BUILD)
 
 $(BIN):
-	mkdir $(BIN)
+	mkdir -p $(BIN)
 
 .PHONY: clean
 clean:
-	rm -rf ./bin/* ./build/*
+	rm -rf $(BIN) $(BUILD)
+
+.PHONY: run-pi3
+run-pi3:
+	qemu-system-aarch64 -M raspi3b -kernel bin/kernel8.img -serial stdio -display none -dtb qemu/bcm2710-rpi-3-b.dtb -D qemu.log -d in_asm
+
+.PHONY: run-pi4
+run-pi4:
+	qemu-system-aarch64 -M raspi4b -kernel bin/kernel8.img -serial stdio -display none -dtb qemu/bcm2711-rpi-4-b.dtb -D qemu.log -d in_asm
